@@ -23,15 +23,13 @@ export default function LoginPage() {
   };
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("email", input.email);
-    formData.append("password", input.password);
-    formData.append("role", input.role);
+    const payload = {
+      email: input.email,
+      password: input.password,
+      role: input.role,
+    };
     try {
-      const res = await axios.post(`${USER_API_ENDPOINT}/login`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const res = await axios.post(`${USER_API_ENDPOINT}/login`, payload, {
         withCredentials: true,
       });
       if (res.data.success) {
@@ -61,7 +59,10 @@ export default function LoginPage() {
               </label>
               <input
                 type="email"
+                name="email"
                 placeholder="you@example.com"
+                value={input.email}
+                onChange={changeEventHandler}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
               />
             </div>
@@ -72,7 +73,10 @@ export default function LoginPage() {
               </label>
               <input
                 type="password"
+                name="password"
                 placeholder="Enter your password"
+                value={input.password}
+                onChange={changeEventHandler}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
               />
             </div>

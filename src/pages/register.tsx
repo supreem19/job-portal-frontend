@@ -5,13 +5,14 @@ import { USER_API_ENDPOINT } from "@/utils/data";
 import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ImagePlus } from "lucide-react";
 
 interface InputState {
   fullName: string;
   email: string;
   password: string;
   role: string;
-  phoneNumber: "";
+  phoneNumber: string;
   file: File | undefined;
 }
 
@@ -34,31 +35,57 @@ export default function RegisterPage() {
     setInput({ ...input, file: e.target.files?.[0] });
   };
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const uploadImageToS3 = async (): Promise<string> => {
+    if (!input.file) return "";
+
     const formData = new FormData();
-    formData.append("fullName", input.fullName);
-    formData.append("email", input.email);
-    formData.append("password", input.password);
-    formData.append("role", input.role);
-    formData.append("phoneNumber", input.phoneNumber);
-    if (input.file) {
-      formData.append("file", input.file);
-    }
-    try {
-      const res = await axios.post(`${USER_API_ENDPOINT}/register`, formData, {
+    formData.append("image", input.file);
+
+    const { data } = await axios.post(
+      "http://localhost:5011/api/upload",
+      formData,
+      {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+      },
+    );
+
+    return data.imageUrl;
+  };
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      let profilePhoto = "";
+
+      // Upload image first
+      if (input.file) {
+        profilePhoto = await uploadImageToS3();
+      }
+
+      // Register user
+      const payload = {
+        fullName: input.fullName,
+        email: input.email,
+        password: input.password,
+        phoneNumber: input.phoneNumber,
+        role: input.role,
+        profilePhoto,
+      };
+
+      const res = await axios.post(`${USER_API_ENDPOINT}/register`, payload, {
         withCredentials: true,
       });
+
       if (res.data.success) {
         toast.success(res.data.message);
-        router.push("/login"); // Redirect to login page after successful registration
+        router.push("/login");
       }
     } catch (error) {
       console.log(error);
-      toast.error("Registration failed. Please try again.");
+      toast.error("Registration failed.");
     }
   };
 
@@ -86,6 +113,7 @@ export default function RegisterPage() {
                 name="fullName"
                 value={input.fullName}
                 onChange={changeEventHandler}
+                required
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
               />
             </div>
@@ -100,6 +128,7 @@ export default function RegisterPage() {
                 name="email"
                 value={input.email}
                 onChange={changeEventHandler}
+                required
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
               />
             </div>
@@ -109,11 +138,12 @@ export default function RegisterPage() {
                 Phone Number
               </label>
               <input
-                type="number"
+                type="tel"
                 placeholder="Phone Number"
                 name="phoneNumber"
                 value={input.phoneNumber}
                 onChange={changeEventHandler}
+                required
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
               />
             </div>
@@ -127,6 +157,7 @@ export default function RegisterPage() {
                 name="password"
                 value={input.password}
                 onChange={changeEventHandler}
+                required
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
               />
             </div>
@@ -138,6 +169,7 @@ export default function RegisterPage() {
                   value="Student"
                   checked={input.role === "Student"}
                   onChange={changeEventHandler}
+                  required
                   className="cursor-pointer"
                 />
                 <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -162,12 +194,23 @@ export default function RegisterPage() {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Profile Photo
               </label>
+              <label
+                htmlFor="profile-photo"
+                className="flex cursor-pointer items-center gap-3 rounded-md border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-600 transition hover:border-[#022bf8] hover:bg-blue-50"
+              >
+                <ImagePlus className="size-5 shrink-0 text-[#022bf8]" />
+                <span className="truncate">
+                  {input.file?.name ?? "Choose a profile photo"}
+                </span>
+              </label>
               <input
+                id="profile-photo"
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 onChange={changeFileHandler}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none transition focus:border-[#022bf8] focus:ring-2 focus:ring-[#022bf8]/20"
+                className="sr-only"
               />
+              <p className="mt-1 text-xs text-gray-500">PNG, JPG, or WebP</p>
             </div>
             <button
               type="submit"
