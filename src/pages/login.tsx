@@ -4,6 +4,9 @@ import { useState } from "react";
 import axios from "axios";
 import { USER_API_ENDPOINT } from "@/utils/data";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/reducer/authSlice";
+import { useRouter } from "next/router";
 
 export interface loginInputState {
   email: string;
@@ -17,6 +20,8 @@ export default function LoginPage() {
     password: "",
     role: "",
   });
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   const changeEventHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -33,8 +38,9 @@ export default function LoginPage() {
         withCredentials: true,
       });
       if (res.data.success) {
+        dispatch(setUser(res.data.user));
         toast.success(res.data.message);
-        // router.push("/login"); // Redirect to login page after successful registration
+        router.push("/"); // Redirect to login page after successful registration
       }
     } catch (error) {
       console.log(error);

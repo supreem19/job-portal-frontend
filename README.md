@@ -24,6 +24,25 @@ The `pages/api` directory is mapped to `/api/*`. Files in this directory are tre
 
 This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Profile data
+
+The profile reads the signed-in user from Redux (`auth.user`), including contact
+details and the nested `profile` fields for bio, skills, photo, and resume.
+The navbar also uses the Redux user's photo and name in its profile menu, with
+an initial fallback when the photo is unavailable.
+Its Profile link opens `/profile`. The Logout button sends a credentialed POST
+to `${USER_API_ENDPOINT}/logout` so the backend can clear the session cookie.
+Successful logout clears Redux and redirects to the home page (`/`), replacing
+the current history entry. Redux is cleared only when the response contains `success: true`; failed
+requests show an error and keep the user signed in.
+The edit modal starts with the current user's full name, email, phone, and bio.
+Saving sends a credentialed POST to
+`${USER_API_ENDPOINT}/profile/updateProfile` with a flat JSON body containing
+`fullName`, `email`, `phoneNumber`, and `bio`. A successful response must include
+`success: true` and the updated `user`, which replaces the Redux user. Failed
+requests leave the modal open and show an error notification. Cancelling does
+not change Redux.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
